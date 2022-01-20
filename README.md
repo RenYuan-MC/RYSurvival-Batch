@@ -1,5 +1,5 @@
-# AutoMCServerBat
-Windows mc一键启动bat定制魔改版
+# 任渊生存服务端启动器
+MC一键启动脚本(AutoMCServerBat)的定制魔改版
 # 新增功能
 1.高度可配置的配置文件
 2.更统一的格式
