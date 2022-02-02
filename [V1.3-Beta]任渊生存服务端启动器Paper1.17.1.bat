@@ -12,6 +12,7 @@ set ServerCore=Paper-1.17.1.jar
 set ServerCoreName=Paper1.17.1
 set Times=0
 set DividingLine=-----------------------------------------------------
+set Port= 端口:
 SETLOCAL EnableDelayedExpansion
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
 if not exist ConfigProgress.txt set LunchMode=First && goto FirstLunch
@@ -23,7 +24,7 @@ goto ConfigReader
 :Main
 echo %INFO%%DividingLine%
 title %titl% %ServerCoreName%
-if %AutoRestart% == true title %titl% %ServerCoreName% 重启次数:0
+if %AutoRestart% == true title %titl% %ServerCoreName%%Port%%ServerPort% 重启次数:0
 echo %INFO%非紧急情况不建议直接关闭控制台
 echo %INFO%在控制台输入stop然后回车即可关服
 echo %INFO%任渊生存Bug报告请添加QQ群:1029946156
@@ -71,7 +72,7 @@ ping -n 2 -w 500 0.0.0.1>nul)
 :Restart
 echo %INFO%服务端重启中
 set /a Times+=1
-title %titl% %ServerCoreName% 重启次数:%Times%
+title %titl% %ServerCoreName%%Port%%ServerPort% 重启次数:%Times% 
 if %AutoMemSet% == false goto MainMemCheck
 set CheckStatus=MainMemCheck && goto MemCheck
 :MainMemCheck
@@ -288,12 +289,17 @@ set ServerGUIOut=%ServerGUI:true=开启%
 set ServerGUIOut=%ServerGUIOut:false=关闭%
 echo %INFO%服务器核心GUI:%ServerGUIOut%
 
+if not exist server.properties set Port= && goto main
+echo %INFO%%DividingLine%
+echo %INFO%开始读取服务端端口
+for /f "tokens=1,* delims==" %%a in ('findstr "server-port=" "server.properties"') do (set ServerPort=%%b)
+set ServerPort=%ServerPort: =%
+echo %INFO%端口:%ServerPort%
 goto Main
 
 
 
 :ColorText
-echo off
 <nul set /p ".=%DEL%" > "%~2"
 findstr /v /a:%1 /R "^$" "%~2" nul
 del "%~2" > nul 2>&1
