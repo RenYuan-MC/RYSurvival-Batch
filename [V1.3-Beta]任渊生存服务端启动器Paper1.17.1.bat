@@ -42,6 +42,19 @@ if %EarlyLunchWait% equ 0 goto Loop
 echo %INFO%服务端将在%EarlyLunchWait%秒后启动
 for /l %%a in (1,1,%EarlyLunchWait%) do (ping -n 2 -w 500 0.0.0.1>nul)
 
+if not exist eula.txt goto EulaTask
+for /f "tokens=1,* delims==" %%a in ('findstr "eula=" "eula.txt"') do set eula=%%b
+if eula == true goto Loop
+:EulaTask
+echo %INFO%%DividingLine%
+call :ColorText 0E "%WARN%等等！" && echo.
+call :ColorText 0E "%WARN%在服务端运行前,你还要同意Minecraft EULA " && echo.
+echo %INFO%查看EULA请前往 https://account.mojang.com/documents/minecraft_eula
+echo %INFO%在此处按任意键表示同意Minecraft EULA并启动服务端
+pause>nul
+echo eula=true>eula.txt
+echo %INFO%你同意了Minecraft EULA,服务端即将启动
+
 :Loop
 echo %DividingLine%
 echo Java 版本: && .\Java\bin\java.exe -version
