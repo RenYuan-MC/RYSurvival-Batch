@@ -1,0 +1,10 @@
+#配置文件,请勿随意删除
+#如需重新配置启动器设置清删除ConfigProgress.txt
+AutoMemSet=true 
+SysMem=768 
+MinMem=128 
+AutoRestart=true 
+RestartWait=10 
+EarlyLunchWait=0
+LogAutoRemove=false 
+ServerGUI=false 
