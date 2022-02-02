@@ -5,7 +5,7 @@ cd /d "%~dp0"
 set INFO=[Client thread／INFO]：
 set WARN=[Client thread／WARN]：
 set INPUT=[Client thread／INPUT]：
-set DEBUG=[Client thread／DEBUG]：
+set FATAL=[Client thread／FATAL]：
 echo %INFO%初始化中
 set GUIControl=nogui
 set ServerCore=Paper-1.17.1.jar
@@ -13,6 +13,7 @@ set ServerCoreName=Paper1.17.1
 set Times=0
 set DividingLine=-----------------------------------------------------
 set Port= 端口:
+set Tasktime=7
 SETLOCAL EnableDelayedExpansion
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
 if not exist ConfigProgress.txt set LunchMode=First && goto FirstLunch
@@ -39,13 +40,13 @@ if %ServerGUI% == true set GUIControl=
 echo %INFO%%DividingLine%
 echo %INFO%服务端目前为半成品,请勿使用
 echo %INFO%服务端版本号:1.3.1 Test1-b0[构建版本号#0]
-if %EarlyLunchWait% equ 0 goto Loop
+if %EarlyLunchWait% equ 0 goto GetJavaVersion
 echo %INFO%服务端将在%EarlyLunchWait%秒后启动
 for /l %%a in (1,1,%EarlyLunchWait%) do (ping -n 2 -w 500 0.0.0.1>nul)
 
 if not exist eula.txt goto EulaTask
 for /f "tokens=1,* delims==" %%a in ('findstr "eula=" "eula.txt"') do set eula=%%b
-if eula == true goto Loop
+if %eula% == true goto GetJavaVersion
 :EulaTask
 echo %INFO%%DividingLine%
 call :ColorText 0E "%WARN%等等！" && echo.
@@ -56,9 +57,19 @@ pause>nul
 echo eula=true>eula.txt
 echo %INFO%你同意了Minecraft EULA,服务端即将启动
 
+
+:GetJavaVersion
+cd lib
+if %EarlyLunchWait% LSS 7 (set Tasktime-=%EarlyLunchWait%) else (set Tasktime=1)
+for /l %%a in (1,1,%Tasktime%) do (ping -n 2 -w 500 0.0.0.1>nul
+if exist JavaVersion.txt goto JavaTask)
+goto ERROREXIT
+:JavaTask
+for /f "tokens=1,* delims==" %%a in ('findstr "Version=" "JavaVersion.txt"') do (set JavaVersion=%%b)
+echo %INFO%Java版本:%JavaVersion%
+cd..
+
 :Loop
-echo %DividingLine%
-echo Java 版本: && .\Java\bin\java.exe -version
 echo %DividingLine%
 echo loading Tuinity1.16.5, please wait...
 .\Java\bin\java.exe -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerCore% %GUIControl%
@@ -291,13 +302,23 @@ echo %INFO%服务器核心GUI:%ServerGUIOut%
 
 if not exist server.properties set Port= && goto main
 echo %INFO%%DividingLine%
-echo %INFO%开始读取服务端端口
+echo %INFO%开始读取服务器信息
 for /f "tokens=1,* delims==" %%a in ('findstr "server-port=" "server.properties"') do (set ServerPort=%%b)
 set ServerPort=%ServerPort: =%
 echo %INFO%端口:%ServerPort%
+
+cd lib
+start wscript -e:vbs JavaTask.vbs
+cd..
+
 goto Main
 
-
+:ERROREXIT
+call :ColorText 0C "%FATAL%启动器遇到致命错误,无法继续运行,这可能是一个BUG" && echo.
+call :ColorText 0C "%FATAL%BUG报告请前往启动器脚本的github页面或添加QQ1593713272" && echo.
+call :ColorText 0C "%FATAL%按任意键退出"
+pause>nul
+exit
 
 :ColorText
 <nul set /p ".=%DEL%" > "%~2"
