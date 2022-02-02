@@ -9,7 +9,8 @@ set FATAL=[Client thread／FATAL]：
 echo %INFO%初始化中
 set GUIControl=nogui
 set ServerCore=Paper-1.17.1.jar
-set ServerCoreName=Paper1.17.1
+set ServerCoreName=%ServerCore:.jar=%
+set ServerCoreName=%ServerCoreName:-=%
 set Times=0
 set DividingLine=-----------------------------------------------------
 set Port= 端口:
@@ -28,18 +29,15 @@ title %titl% %ServerCoreName%
 if %AutoRestart% == true title %titl% %ServerCoreName%%Port%%ServerPort% 重启次数:0
 echo %INFO%非紧急情况不建议直接关闭控制台
 echo %INFO%在控制台输入stop然后回车即可关服
-echo %INFO%任渊生存Bug报告请添加QQ群:1029946156
 echo %INFO%%DividingLine%
-echo %INFO%服务端使用 糖糕云 一键启动脚本魔改版
+echo %INFO%本脚本为 糖糕云 一键启动脚本魔改版
+echo %INFO%版本:1.3-Beta[由原版1.3魔改]
 echo %INFO%原作者: 梦想小站
 echo %INFO%原版GitHub: https://github.com/dreamstation625/AutoMCServerBat
 if %AutoMemSet% == false goto EarlyMemCheck
 set CheckStatus=EarlyMemCheck && goto MemCheck
 :EarlyMemCheck
 if %ServerGUI% == true set GUIControl= 
-echo %INFO%%DividingLine%
-echo %INFO%服务端目前为半成品,请勿使用
-echo %INFO%服务端版本号:1.3.1 Test1-b0[构建版本号#0]
 if %EarlyLunchWait% equ 0 goto GetJavaVersion
 echo %INFO%服务端将在%EarlyLunchWait%秒后启动
 for /l %%a in (1,1,%EarlyLunchWait%) do (ping -n 2 -w 500 0.0.0.1>nul)
@@ -71,7 +69,7 @@ cd..
 
 :Loop
 echo %DividingLine%
-echo loading Tuinity1.16.5, please wait...
+echo loading %ServerCoreName%, please wait...
 .\Java\bin\java.exe -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerCore% %GUIControl%
 echo #
 echo %DividingLine%
