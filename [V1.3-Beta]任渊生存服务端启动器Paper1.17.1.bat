@@ -17,6 +17,10 @@ set Port= 端口:
 set Tasktime=7
 SETLOCAL EnableDelayedExpansion
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
+cd lib
+start wscript -e:vbs JavaTask.vbs
+cd..
+if exist config.properties ren config.properties config.txt
 if not exist ConfigProgress.txt set LunchMode=First && goto FirstLunch
 for /f "tokens=1,* delims==" %%a in ('findstr "ConfigSet=" "ConfigProgress.txt"') do set ConfigSet=%%b
 if %ConfigSet% == false set LunchMode=Incomplete && goto FirstLunch
@@ -59,8 +63,8 @@ echo %INFO%你同意了Minecraft EULA,服务端即将启动
 :GetJavaVersion
 cd lib
 if %EarlyLunchWait% LSS 7 (set Tasktime-=%EarlyLunchWait%) else (set Tasktime=1)
-for /l %%a in (1,1,%Tasktime%) do (ping -n 2 -w 500 0.0.0.1>nul
-if exist JavaVersion.txt goto JavaTask)
+for /l %%a in (1,1,%Tasktime%) do (if exist JavaVersion.txt goto JavaTask
+ping -n 2 -w 500 0.0.0.1>nul)
 goto ERROREXIT
 :JavaTask
 for /f "tokens=1,* delims==" %%a in ('findstr "Version=" "JavaVersion.txt"') do (set JavaVersion=%%b)
@@ -304,10 +308,6 @@ echo %INFO%开始读取服务器信息
 for /f "tokens=1,* delims==" %%a in ('findstr "server-port=" "server.properties"') do (set ServerPort=%%b)
 set ServerPort=%ServerPort: =%
 echo %INFO%端口:%ServerPort%
-
-cd lib
-start wscript -e:vbs JavaTask.vbs
-cd..
 
 goto Main
 
