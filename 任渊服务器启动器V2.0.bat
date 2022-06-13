@@ -35,7 +35,6 @@ call :StartServer
 
 :: 启动服务器
 :StartServer
-cls
 call :EchoLogo
 call :MemoryCheck
 echo %LOG%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar% >>client\log\latest.log
@@ -169,8 +168,9 @@ goto exit
 
 
 
-:: 输出LOGO
+:: 输出LOGO,同时带清屏
 :EchoLogo
+cls
 echo  _____                          _____                             _____ _ _            _   
 echo ^|  __ \                        / ____^|                           / ____^| (_)          ^| ^|  
 echo ^| ^|  ^| ^| __ ___      ___ __   ^| (___   ___ _ ____   _____ _ __  ^| ^|    ^| ^|_  ___ _ __ ^| ^|_ 
@@ -184,11 +184,12 @@ goto exit
 
 :: 输出彩色字体
 :ColorText
+:: 记录日志
 echo %~2 >>client\log\latest.log
+:: 输出彩色字体
 echo off
 <nul set /p ".=%DEL%" > "%~2"
 findstr /v /a:%1 /R "^$" "%~2" nul
-:: 记录日志
 del "%~2" > nul 2>&1
 goto exit
 
