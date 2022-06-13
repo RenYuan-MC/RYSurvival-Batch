@@ -20,7 +20,7 @@ call :DefaultConfigSet
 call :ConfigLoader
 call :ConfigReader
 
-
+if not exist "%~dp0\client\java.path" call :echo "%INFO%找不到Java列表,尝试获取中" && call :JavaCheck
 for /f "tokens=1,* delims==" %%a in (%~dp0\client\java.path) do set Java=%%a
 
 for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
@@ -28,8 +28,9 @@ for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
 call :StartServer
 
 
-:: 模块
 
+:: 模块
+goto exit
 
 
 
@@ -41,15 +42,17 @@ echo %LOG%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar% 
 echo %LOG%当前时间 %date% %time% >>client\log\latest.log
 %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%
 if %ERRORLEVEL% neq 0 echo %LOG%服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time% >>client\log\latest.log
-pause
-goto exit
+pause>nul
+call :exit
 
 
 
-:: 获取系统Java
+:: 获取Java列表并储存
 :JavaCheck
 :: 固定工作路径
 cd "%~dp0\client"
+:: 重置Java路径列表
+echo. >java.path
 :: 初始化首个Java路径检测
 set Java=".\Java\bin\java.exe"
 :: 初始化检测次数
@@ -155,8 +158,6 @@ if %LunchMode% == First call :echo "%INFO%检测到第一次启动,正在准备配置文件"
 if %LunchMode% == Incomplete call :echo "%INFO%检测到未配置完成,正在准备配置文件"
 :: 检测Java列表
 call :echo "%INFO%检测Java中"
-:: 重置Java路径列表
-echo. >java.path
 :: 检测Java列表
 call :JavaCheck
 echo #配置文件,请勿随意删除>progress.properties
