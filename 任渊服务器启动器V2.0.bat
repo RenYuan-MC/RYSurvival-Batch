@@ -1,5 +1,199 @@
 @echo off
 chcp 936>nul
-set titl=ç³–ç³•äº‘MCä¸€é”®å¯åŠ¨è„šæœ¬-ä»»æ¸Šç”Ÿå­˜
-title %titl% åˆå§‹åŒ–ä¸­
 cd /d "%~dp0"
+call :EchoLogo                                            
+set titl=ÀèÃ÷MCÒ»¼üÆô¶¯½Å±¾
+set INFO=[Server Client thread£¯INFO]£º
+set WARN=[Server Client thread£¯WARN]£º
+set ERROR=[Server Client thread£¯ERROR]£º
+set INPUT=[Server Client thread£¯INPUT]£º
+set DEBUG=[Server Client thread£¯DEBUG]£º
+set Line=-----------------------------------------------------
+title %titl% ³õÊ¼»¯ÖÐ
+echo %INFO%³õÊ¼»¯ÖÐ
+SETLOCAL EnableDelayedExpansion
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
+
+call :DefaultConfigSet
+call :ConfigLoader
+call :ConfigReader
+
+
+for /f "tokens=1,* delims==" %%a in (%~dp0\client\java.path) do set Java=%%a
+echo %Java%
+
+call :StartServer
+
+
+:: Ä£¿é
+
+
+
+
+:: Æô¶¯·þÎñÆ÷
+:StartServer
+cls
+call :EchoLogo
+call :MemoryCheck
+%Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%
+pause>nul
+goto StartServer
+
+
+
+:: »ñÈ¡ÏµÍ³Java
+:JavaCheck
+:: ³õÊ¼»¯Ê×¸öJavaÂ·¾¶¼ì²â
+set Java=".\Java\bin\java.exe"
+:: ³õÊ¼»¯¼ì²â´ÎÊý
+set checkTimes = 0
+:JavaTask
+:: ¼ì²â´ÎÊý+1²¢Ñ­»·
+set /a checkTimes += 1
+:: µ÷ÓÃJava -versionÃüÁî²¢»ñÈ¡Æäerrorlevel
+%Java% -version >nul 2>&1
+:: Èç¹ûerrorlevelÎª0ÔòÐ´ÈëJavaÁÐ±í
+if %ERRORLEVEL% equ 0 echo %Java%>>java.path
+:: ¿ÉÄÜµÄJavaÂ·¾¶
+if %checkTimes% equ 1 set Java="java" && goto JavaTask
+if %checkTimes% equ 2 set Java="%JAVA_HOME%\java.exe" && goto JavaTask
+if %checkTimes% equ 3 set Java="C:\Java\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 4 set Java="C:\Java\Java7\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 5 set Java="C:\Java\Java8\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 6 set Java="C:\Java\Java9\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 7 set Java="C:\Java\Java11\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 8 set Java="C:\Java\Java15\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 9 set Java="C:\Java\Java16\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 10 set Java="C:\Java\Java17\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 11 set Java="C:\Java\Java18\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 12 set Java="C:\Java7\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 13 set Java="C:\Java8\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 14 set Java="C:\Java9\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 15 set Java="C:\Java11\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 16 set Java="C:\Java15\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 17 set Java="C:\Java16\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 18 set Java="C:\Java17\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 19 set Java="C:\Java18\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 20 set Java="D:\Java\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 21 set Java="D:\Java\Java7\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 22 set Java="D:\Java\Java8\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 23 set Java="D:\Java\Java9\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 24 set Java="D:\Java\Java11\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 25 set Java="D:\Java\Java15\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 26 set Java="D:\Java\Java16\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 27 set Java="D:\Java\Java17\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 28 set Java="D:\Java\Java18\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 29 set Java="D:\Java7\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 30 set Java="D:\Java8\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 31 set Java="D:\Java9\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 32 set Java="D:\Java11\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 33 set Java="D:\Java15\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 34 set Java="D:\Java16\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 35 set Java="D:\Java17\bin\java.exe" && goto JavaTask
+if %checkTimes% equ 36 set Java="D:\Java18\bin\java.exe" && goto JavaTask
+goto exit
+
+
+
+
+:: »ñÈ¡¿ÉÓÃÄÚ´æ
+:MemoryCheck
+echo %INFO%%Line%
+:: ´úÂëÀ´×Ô https://github.com/dreamstation625/AutoMCServerBat
+for /f "delims=" %%a in ('wmic os get TotalVisibleMemorySize /value^|find "="') do set %%a
+set /a t1=%TotalVisibleMemorySize%,t2=1024
+set /a ram=%t1%/%t2%
+for /f "delims=" %%b in ('wmic os get FreePhysicalMemory /value^|find "="') do set %%b
+set /a t3=%FreePhysicalMemory%
+set /a freeram=%t3%/%t2%
+:: Êä³öÄÚ´æÐÅÏ¢
+echo %INFO%ÏµÍ³×î´óÄÚ´æÎª£º%ram% MB£¬Ê£Óà¿ÉÓÃÄÚ´æÎª£º%freeram% MB
+set /a UserRam=%freeram%-%SysMem%
+:: ¼ì²âÄÚ´æ¿ÕÓà²¢¾¯¸æ
+if %UserRam% lss 1024 (call :ColorText 0E "%WARN%Ê£Óà¿ÉÓÃÄÚ´æ¿ÉÄÜ²»×ãÒÔ¿ªÆô·þÎñ¶Ë»òÕß¿ªÆôºó¿¨¶Ù" && echo.
+set /a UserRam=1024)
+:: ·ÀÖ¹·ÖÅä¹ý¶àÄÚ´æ
+if %UserRam% gtr 16384 set /a UserRam=16384
+:: Êä³ö×îÖÕ·ÖÅäµÄÄÚ´æ
+echo %INFO%±¾´Î¿ª·þ½«·ÖÅä×î´ó %UserRam% MB
+echo %INFO%%Line%
+goto exit
+
+
+
+
+:: ¼ì²âÅäÖÃÎÄ¼þÊÇ·ñ´æÔÚ
+:ConfigLoader
+:: ¼ì²âÆô¶¯Æ÷ÎÄ¼þ¼Ð
+if not exist "%~dp0\client" set lunchMode=First && goto FirstLunch
+:: ¼ì²âÆô¶¯Æ÷ÅäÖÃ×´Ì¬ÎÄ¼þ
+if not exist "%~dp0\client\progress.properties" set lunchMode=Incomplete && goto FirstLunch
+:: »ñÈ¡Æô¶¯Æ÷ÅäÖÃÎÄ¼þ×´Ì¬
+for /f "tokens=1,* delims==" %%a in ('findstr "ConfigSet=" "%~dp0\client\progress.properties"') do set ConfigSet=%%b
+:: ¼ì²âÆô¶¯Æ÷ÅäÖÃÎÄ¼þ×´Ì¬
+if %ConfigSet% == false set lunchMode=Incomplete && goto FirstLunch
+goto exit
+
+
+
+
+:: Ê×´ÎÆô¶¯µÄÅäÖÃ
+:FirstLunch
+:: Èç¹û²»´æÔÚÆô¶¯Æ÷ÎÄ¼þ¼ÐÔò´´½¨
+if not exist "%~dp0\client" mkdir "%~dp0\client"
+cd client
+:: ¼ì²âLunchMode²¢ÇÒÊä³ö
+if %LunchMode% == First echo %INFO%¼ì²âµ½µÚÒ»´ÎÆô¶¯,ÕýÔÚ×¼±¸ÅäÖÃÎÄ¼þ
+if %LunchMode% == Incomplete echo %INFO%¼ì²âµ½Î´ÅäÖÃÍê³É,ÕýÔÚ×¼±¸ÅäÖÃÎÄ¼þ
+:: ¼ì²âJavaÁÐ±í
+echo %INFO%¼ì²âJavaÖÐ
+:: ÖØÖÃJavaÂ·¾¶ÁÐ±í
+echo. >java.path
+:: ¼ì²âJavaÁÐ±í
+call :JavaCheck
+echo #ÅäÖÃÎÄ¼þ,ÇëÎðËæÒâÉ¾³ý>progress.properties
+echo #ÈçÐèÖØÐÂÅäÖÃÆô¶¯Æ÷ÉèÖÃÇåÉ¾³ý±¾ÎÄ¼þ>>progress.properties
+echo ConfigSet=true>>progress.properties
+cd..
+goto exit
+
+
+
+
+:: Êä³öLOGO
+:EchoLogo
+echo  _____                          _____                             _____ _ _            _   
+echo ^|  __ \                        / ____^|                           / ____^| (_)          ^| ^|  
+echo ^| ^|  ^| ^| __ ___      ___ __   ^| (___   ___ _ ____   _____ _ __  ^| ^|    ^| ^|_  ___ _ __ ^| ^|_ 
+echo ^| ^|  ^| ^|/ _` \ \ /\ / / '_ \   \___ \ / _ \ '__\ \ / / _ \ '__^| ^| ^|    ^| ^| ^|/ _ \ '_ \^| __^|
+echo ^| ^|__^| ^| (_^| ^|\ V  V /^| ^| ^| ^|  ____) ^|  __/ ^|   \ V /  __/ ^|    ^| ^|____^| ^| ^|  __/ ^| ^| ^| ^|_ 
+echo ^|_____/ \__,_^| \_/\_/ ^|_^| ^|_^| ^|_____/ \___^|_^|    \_/ \___^|_^|     \_____^|_^|_^|\___^|_^| ^|_^|\__^|  
+echo. 
+goto exit
+
+
+
+
+:ColorText
+echo off
+<nul set /p ".=%DEL%" > "%~2"
+findstr /v /a:%1 /R "^$" "%~2" nul
+del "%~2" > nul 2>&1
+goto exit
+
+
+
+:DefaultConfigSet
+set AutoMemset=true
+set SysMem=768
+set MinMem=128
+set ServerJar=server.jar
+set ServerJarName=%ServerJar:.jar=%
+goto exit
+
+
+
+:ConfigReader
+goto exit
+
+:exit
