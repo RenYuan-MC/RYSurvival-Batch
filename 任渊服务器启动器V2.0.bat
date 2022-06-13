@@ -1,16 +1,18 @@
 @echo off
 chcp 936>nul
 cd /d "%~dp0"
-call :EchoLogo                                            
+call :EchoLogo
 set titl=黎明MC一键启动脚本
 set INFO=[Server Client thread／INFO]：
 set WARN=[Server Client thread／WARN]：
 set ERROR=[Server Client thread／ERROR]：
 set INPUT=[Server Client thread／INPUT]：
 set DEBUG=[Server Client thread／DEBUG]：
+set LOG=[Server Client thread／LOG]：
 set Line=-----------------------------------------------------
+call :LogSystemLoader
 title %titl% 初始化中
-echo %INFO%初始化中
+call :echo "%INFO%初始化中"
 SETLOCAL EnableDelayedExpansion
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
 
@@ -20,7 +22,8 @@ call :ConfigReader
 
 
 for /f "tokens=1,* delims==" %%a in (%~dp0\client\java.path) do set Java=%%a
-echo %Java%
+
+for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
 
 call :StartServer
 
@@ -35,14 +38,19 @@ call :StartServer
 cls
 call :EchoLogo
 call :MemoryCheck
+echo %LOG%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar% >>client\log\latest.log
+echo %LOG%当前时间 %date% %time% >>client\log\latest.log
 %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%
-pause>nul
-goto StartServer
+if %ERRORLEVEL% neq 0 echo %LOG%服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time% >>client\log\latest.log
+pause
+goto exit
 
 
 
 :: 获取系统Java
 :JavaCheck
+:: 固定工作路径
+cd "%~dp0\client"
 :: 初始化首个Java路径检测
 set Java=".\Java\bin\java.exe"
 :: 初始化检测次数
@@ -91,6 +99,7 @@ if %checkTimes% equ 33 set Java="D:\Java15\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 34 set Java="D:\Java16\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 35 set Java="D:\Java17\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 36 set Java="D:\Java18\bin\java.exe" && goto JavaTask
+cd ..
 goto exit
 
 
@@ -98,7 +107,7 @@ goto exit
 
 :: 获取可用内存
 :MemoryCheck
-echo %INFO%%Line%
+call :echo "%INFO%%Line%"
 :: 代码来自 https://github.com/dreamstation625/AutoMCServerBat
 for /f "delims=" %%a in ('wmic os get TotalVisibleMemorySize /value^|find "="') do set %%a
 set /a t1=%TotalVisibleMemorySize%,t2=1024
@@ -107,7 +116,7 @@ for /f "delims=" %%b in ('wmic os get FreePhysicalMemory /value^|find "="') do s
 set /a t3=%FreePhysicalMemory%
 set /a freeram=%t3%/%t2%
 :: 输出内存信息
-echo %INFO%系统最大内存为：%ram% MB，剩余可用内存为：%freeram% MB
+call :echo "%INFO%系统最大内存为：%ram% MB，剩余可用内存为：%freeram% MB"
 set /a UserRam=%freeram%-%SysMem%
 :: 检测内存空余并警告
 if %UserRam% lss 1024 (call :ColorText 0E "%WARN%剩余可用内存可能不足以开启服务端或者开启后卡顿" && echo.
@@ -115,8 +124,8 @@ set /a UserRam=1024)
 :: 防止分配过多内存
 if %UserRam% gtr 16384 set /a UserRam=16384
 :: 输出最终分配的内存
-echo %INFO%本次开服将分配最大 %UserRam% MB
-echo %INFO%%Line%
+call :echo "%INFO%本次开服将分配最大 %UserRam% MB"
+call :echo "%INFO%%Line%"
 goto exit
 
 
@@ -143,10 +152,10 @@ goto exit
 if not exist "%~dp0\client" mkdir "%~dp0\client"
 cd client
 :: 检测LunchMode并且输出
-if %LunchMode% == First echo %INFO%检测到第一次启动,正在准备配置文件
-if %LunchMode% == Incomplete echo %INFO%检测到未配置完成,正在准备配置文件
+if %LunchMode% == First call :echo "%INFO%检测到第一次启动,正在准备配置文件"
+if %LunchMode% == Incomplete call :echo "%INFO%检测到未配置完成,正在准备配置文件"
 :: 检测Java列表
-echo %INFO%检测Java中
+call :echo "%INFO%检测Java中"
 :: 重置Java路径列表
 echo. >java.path
 :: 检测Java列表
@@ -173,12 +182,23 @@ goto exit
 
 
 
-
+:: 输出彩色字体
 :ColorText
+echo %~2 >>client\log\latest.log
 echo off
 <nul set /p ".=%DEL%" > "%~2"
 findstr /v /a:%1 /R "^$" "%~2" nul
+:: 记录日志
 del "%~2" > nul 2>&1
+goto exit
+
+
+:: 带日志记录的输出
+:Echo
+:: 记录日志
+echo %~1 >>client\log\latest.log
+:: 输出
+echo %~1
 goto exit
 
 
@@ -193,7 +213,24 @@ goto exit
 
 
 
+
 :ConfigReader
+goto exit
+
+
+
+:: 初始化日志系统
+:LogSystemLoader
+:: 创建日志文件夹
+if not exist "%~dp0\client\log" mkdir "%~dp0\client\log"
+:: 获取日期
+set dateNow=%date:~0,10%
+set dateNow=%dateNow:/=-%
+set timeNow=%time:~0,8%
+set timeNow=%timeNow::=%
+:: 检测是否存在上一次的日志,如果存在,则改名
+if exist "%~dp0\client\log\latest.log" ren "%~dp0\client\log\latest.log" %dateNow%_%timeNow%.log
+echo %LOG%当前时间 %date% %time% >>client\log\latest.log
 goto exit
 
 :exit
