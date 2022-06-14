@@ -1,7 +1,7 @@
 @echo off
 chcp 936>nul
 cd /d "%~dp0"
-call :EchoLogo
+call :clsLogo
 set titl=黎明MC一键启动脚本
 set INFO=[Server Client thread／INFO]：
 set WARN=[Server Client thread／WARN]：
@@ -21,7 +21,11 @@ call :ConfigLoader
 call :ConfigReader
 
 if not exist "%~dp0\client\java.path" call :echo "%INFO%找不到Java列表,尝试获取中" && call :JavaCheck
-for /f "tokens=1,* delims==" %%a in (%~dp0\client\java.path) do set Java=%%a
+set /a JavaListid=0
+for /f "delims=[" %%a in (%~dp0\client\java.path) do (
+    if !JavaListid! == %JavaId% set Java=%%a
+    set /a JavaListid+=1
+)
 
 for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
 
@@ -36,7 +40,7 @@ goto exit
 
 :: 启动服务器
 :StartServer
-call :EchoLogo
+call :clsLogo
 call :MemoryCheck
 echo %LOG%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar% >>client\log\latest.log
 echo %LOG%当前时间 %date% %time% >>client\log\latest.log
@@ -62,8 +66,8 @@ set checkTimes = 0
 set /a checkTimes += 1
 :: 调用Java -version命令并获取其errorlevel
 %Java% -version >nul 2>&1
-:: 如果errorlevel为0则写入Java列表
-if %ERRORLEVEL% equ 0 echo %Java%>>java.path
+:: 如果errorlevel为0则写入Java列表,并且将java状态设置为已检测
+if %ERRORLEVEL% equ 0 set getJava=true && echo %Java%>>java.path
 :: 可能的Java路径
 if %checkTimes% equ 1 set Java="java" && goto JavaTask
 if %checkTimes% equ 2 set Java="%JAVA_HOME%\java.exe" && goto JavaTask
@@ -121,8 +125,10 @@ set /a freeram=%t3%/%t2%
 call :echo "%INFO%系统最大内存为：%ram% MB，剩余可用内存为：%freeram% MB"
 set /a UserRam=%freeram%-%SysMem%
 :: 检测内存空余并警告
-if %UserRam% lss 1024 (call :ColorText 0E "%WARN%剩余可用内存可能不足以开启服务端或者开启后卡顿" && echo.
-set /a UserRam=1024)
+if %UserRam% lss 1024 (
+    call :ColorText 0E "%WARN%剩余可用内存可能不足以开启服务端或者开启后卡顿" && echo.
+    set /a UserRam=1024
+)
 :: 防止分配过多内存
 if %UserRam% gtr 16384 set /a UserRam=16384
 :: 输出最终分配的内存
@@ -169,8 +175,8 @@ goto exit
 
 
 
-:: 输出LOGO,同时带清屏
-:EchoLogo
+:: 清屏并输出Logo
+:clsLogo
 cls
 echo  _____                          _____                             _____ _ _            _   
 echo ^|  __ \                        / ____^|                           / ____^| (_)          ^| ^|  
@@ -205,17 +211,20 @@ goto exit
 
 
 
+:: 设置默认的配置
 :DefaultConfigSet
 set AutoMemset=true
 set SysMem=768
 set MinMem=128
 set ServerJar=server.jar
+set JavaId=0
 set ServerJarName=%ServerJar:.jar=%
 goto exit
 
 
 
 
+:: 配置文件读取(WIP)
 :ConfigReader
 goto exit
 
@@ -228,11 +237,14 @@ if not exist "%~dp0\client\log" mkdir "%~dp0\client\log"
 :: 获取日期
 set dateNow=%date:~0,10%
 set dateNow=%dateNow:/=-%
+set dateNow=%dateNow: =%
 set timeNow=%time:~0,8%
 set timeNow=%timeNow::=%
+set timeNow=%timeNow: =%
 :: 检测是否存在上一次的日志,如果存在,则改名
 if exist "%~dp0\client\log\latest.log" ren "%~dp0\client\log\latest.log" %dateNow%_%timeNow%.log
 echo %LOG%当前时间 %date% %time% >>client\log\latest.log
+call :echo "%INFO%日志系统加载完成"
 goto exit
 
 :exit
