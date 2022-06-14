@@ -30,6 +30,7 @@ for /f "delims=[" %%a in (%~dp0\client\java.path) do (
 for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
 
 :ControlPanel
+title %titl% 控制面板
 call :clsLogo
 set ConfigMode=0
 call :echo "%INFO%%Line%"
@@ -52,6 +53,7 @@ goto exit
 
 :: Java控制面板
 :JavaControlPanel
+title %titl% Java选择
 call :clsLogo
 set /a JavaListid=0
 call :echo "%INFO%%Line%"
@@ -67,6 +69,7 @@ goto exit
 
 :: 启动服务器
 :StartServer
+title %titl% 服务器启动
 call :clsLogo
 call :MemoryCheck
 call :Log "启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%"
