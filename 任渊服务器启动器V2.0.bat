@@ -29,8 +29,20 @@ for /f "delims=[" %%a in (%~dp0\client\java.path) do (
 
 for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
 
-call :StartServer
-
+:ControlPanel
+call :clsLogo
+set ConfigMode=0
+call :echo "%INFO%%Line%"
+call :echo "%INFO%1：启动服务器"
+call :echo "%INFO%2：Java选择"
+call :echo "%INFO%%Line%"
+set /p ConfigMode=%INPUT%
+call :Log "用户输入：%ConfigMode%"
+if %ConfigMode% equ 1 call :StartServer
+if %ConfigMode% equ 2 call :JavaControlPanel
+echo %INFO%请输入正确的选项
+for /l %%a in (1,1,1) do (ping -n 2 -w 500 0.0.0.1>nul)
+goto ControlPanel
 
 
 :: 模块
@@ -38,16 +50,31 @@ goto exit
 
 
 
+:: Java控制面板
+:JavaControlPanel
+call :clsLogo
+set /a JavaListid=0
+call :echo "%INFO%%Line%"
+call :echo "%INFO%正在读取Java列表,请稍后"
+for /f "delims=[" %%a in (%~dp0\client\java.path) do (
+    call :echo "%INFO%!JavaListid!：%%a"
+    set /a JavaListid+=1
+)
+call :echo "%INFO%%Line%"
+pause>nul
+goto exit
+
+
 :: 启动服务器
 :StartServer
 call :clsLogo
 call :MemoryCheck
-echo %LOG%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar% >>client\log\latest.log
-echo %LOG%当前时间 %date% %time% >>client\log\latest.log
+call :Log "启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%"
+call :Log "当前时间 %date% %time%"
 %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%
-if %ERRORLEVEL% neq 0 echo %LOG%服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time% >>client\log\latest.log
+if %ERRORLEVEL% neq 0 call :Log "服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time%"
 pause>nul
-call :exit
+goto exit
 
 
 
@@ -201,6 +228,14 @@ del "%~2" > nul 2>&1
 goto exit
 
 
+
+:: 日志记录
+:Log
+echo %LOG%%~1 >>client\log\latest.log
+goto exit
+
+
+
 :: 带日志记录的输出
 :Echo
 :: 记录日志
@@ -234,17 +269,27 @@ goto exit
 :LogSystemLoader
 :: 创建日志文件夹
 if not exist "%~dp0\client\log" mkdir "%~dp0\client\log"
-:: 获取日期
+:: 获取日期和时间
 set dateNow=%date:~0,10%
 set dateNow=%dateNow:/=-%
 set dateNow=%dateNow: =%
-set timeNow=%time:~0,8%
+set timeNow=%time%
 set timeNow=%timeNow::=%
+set timeNow=%timeNow:.=%
 set timeNow=%timeNow: =%
-:: 检测是否存在上一次的日志,如果存在,则改名
-if exist "%~dp0\client\log\latest.log" ren "%~dp0\client\log\latest.log" %dateNow%_%timeNow%.log
-echo %LOG%当前时间 %date% %time% >>client\log\latest.log
+:: 检测是否存在上一次的日志
+if exist "%~dp0\client\log\latest.log" (
+    ::将日志改名
+    ren "%~dp0\client\log\latest.log" %dateNow%_%timeNow%.log
+    :: 打包压缩日志
+    makecab "%~dp0\client\log\%dateNow%_%timeNow%.log" "%~dp0\client\log\%dateNow%_%timeNow%.cab" >nul 2>&1
+    :: 删除原日志
+    del "%~dp0\client\log\%dateNow%_%timeNow%.log"
+)
+:: 初始化新日志输出
+call :Log "当前时间 %date% %time%"
 call :echo "%INFO%日志系统加载完成"
 goto exit
+
 
 :exit
