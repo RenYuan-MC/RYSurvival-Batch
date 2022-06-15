@@ -1,6 +1,9 @@
 @echo off
 chcp 936>nul
 cd /d "%~dp0"
+set ProgramMode=0
+set Line=-----------------------------------------------------
+if -%~1 == --legacy call :LegacySupport
 call :clsLogo
 set titl=黎明MC一键启动脚本
 set INFO=[Server Client thread／INFO]：
@@ -9,7 +12,6 @@ set ERROR=[Server Client thread／ERROR]：
 set INPUT=[Server Client thread／INPUT]：
 set DEBUG=[Server Client thread／DEBUG]：
 set LOG=[Server Client thread／LOG]：
-set Line=-----------------------------------------------------
 call :LogSystemLoader
 title %titl% 初始化中
 call :echo "%INFO%初始化中"
@@ -27,7 +29,7 @@ for /f "delims=[" %%a in (%~dp0\client\java.path) do (
     set /a JavaListid+=1
 )
 
-for /l %%a in (1,1,3) do (ping -n 2 -w 500 0.0.0.1>nul)
+for /l %%a in (1,1,1) do (ping -n 2 -w 500 0.0.0.1>nul)
 
 :ControlPanel
 title %titl% 控制面板
@@ -41,7 +43,7 @@ set /p ConfigMode=%INPUT%
 call :Log "用户输入：%ConfigMode%"
 if %ConfigMode% equ 1 call :StartServer
 if %ConfigMode% equ 2 call :JavaControlPanel
-echo %INFO%请输入正确的选项
+if %ConfigMode% equ exit goto exit
 for /l %%a in (1,1,1) do (ping -n 2 -w 500 0.0.0.1>nul)
 goto ControlPanel
 
@@ -59,7 +61,7 @@ set /a JavaListid=0
 call :echo "%INFO%%Line%"
 call :echo "%INFO%正在读取Java列表,请稍后"
 for /f "delims=[" %%a in (%~dp0\client\java.path) do (
-    call :echo "%INFO%!JavaListid!：%%a"
+    if "!JavaListid!" neq "0" call :echo "%INFO%!JavaListid!：%%a"
     set /a JavaListid+=1
 )
 call :echo "%INFO%%Line%"
@@ -135,7 +137,7 @@ if %checkTimes% equ 33 set Java="D:\Java15\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 34 set Java="D:\Java16\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 35 set Java="D:\Java17\bin\java.exe" && goto JavaTask
 if %checkTimes% equ 36 set Java="D:\Java18\bin\java.exe" && goto JavaTask
-cd ..
+cd /d "%~dp0"
 goto exit
 
 
@@ -193,13 +195,28 @@ cd client
 if %LunchMode% == First call :echo "%INFO%检测到第一次启动,正在准备配置文件"
 if %LunchMode% == Incomplete call :echo "%INFO%检测到未配置完成,正在准备配置文件"
 :: 检测Java列表
-call :echo "%INFO%检测Java中"
+call :echo "%INFO%请稍后,获取系统信息中"
 :: 检测Java列表
 call :JavaCheck
 echo #配置文件,请勿随意删除>"%~dp0\client\progress.properties"
 echo #如需重新配置启动器设置清删除本文件>>"%~dp0\client\progress.properties"
-echo ConfigSet=true>>"%~dp0\client\progress.properties"
-cd..
+echo ConfigSet=false>>"%~dp0\client\progress.properties"
+ping -n 2 -w 500 0.0.0.1>nul
+call :clsLogo
+call :echo "%INFO%在开始使用启动器前,你需要做一些必要的设置"
+call :echo "%INFO%%Line%"
+call :echo "%INFO%请在下方输入你需要使用的Java的序号并回车"
+call :echo "%INFO%如果没有你想要的Java,或者没有任何列出来的Java,请输入0并回车"
+call :echo "%INFO%如果你从未安装过Java,请前往java.com下载并安装"
+ping -n 2 -w 500 0.0.0.1>nul
+set /a JavaListid=0
+call :echo "%INFO%%Line%"
+for /f "delims=[" %%a in (%~dp0\client\java.path) do (
+    if %%a == "java" echo a
+    if "!JavaListid!" neq "0" call :echo "%INFO%!JavaListid!：%%a"
+    set /a JavaListid+=1
+)
+pause
 goto exit
 
 
@@ -208,13 +225,16 @@ goto exit
 :: 清屏并输出Logo
 :clsLogo
 cls
-echo  _____                          _____                             _____ _ _            _   
-echo ^|  __ \                        / ____^|                           / ____^| (_)          ^| ^|  
-echo ^| ^|  ^| ^| __ ___      ___ __   ^| (___   ___ _ ____   _____ _ __  ^| ^|    ^| ^|_  ___ _ __ ^| ^|_ 
-echo ^| ^|  ^| ^|/ _` \ \ /\ / / '_ \   \___ \ / _ \ '__\ \ / / _ \ '__^| ^| ^|    ^| ^| ^|/ _ \ '_ \^| __^|
-echo ^| ^|__^| ^| (_^| ^|\ V  V /^| ^| ^| ^|  ____) ^|  __/ ^|   \ V /  __/ ^|    ^| ^|____^| ^| ^|  __/ ^| ^| ^| ^|_ 
-echo ^|_____/ \__,_^| \_/\_/ ^|_^| ^|_^| ^|_____/ \___^|_^|    \_/ \___^|_^|     \_____^|_^|_^|\___^|_^| ^|_^|\__^|  
-echo. 
+if %ProgramMode% == 0 (
+    echo  _____                          _____                             _____ _ _            _   
+    echo ^|  __ \                        / ____^|                           / ____^| ^(_^)          ^| ^|  
+    echo ^| ^|  ^| ^| __ ___      ___ __   ^| ^(___   ___ _ ____   _____ _ __  ^| ^|    ^| ^|_  ___ _ __ ^| ^|_ 
+    echo ^| ^|  ^| ^|/ _` \ \ /\ / / '_ \   \___ \ / _ \ '__\ \ / / _ \ '__^| ^| ^|    ^| ^| ^|/ _ \ '_ \^| __^|
+    echo ^| ^|__^| ^| ^(_^| ^|\ V  V /^| ^| ^| ^|  ____^) ^|  __/ ^|   \ V /  __/ ^|    ^| ^|____^| ^| ^|  __/ ^| ^| ^| ^|_ 
+    echo ^|_____/ \__,_^| \_/\_/ ^|_^| ^|_^| ^|_____/ \___^|_^|    \_/ \___^|_^|     \_____^|_^|_^|\___^|_^| ^|_^|\__^|  
+    echo. 
+)
+
 goto exit
 
 
@@ -294,5 +314,10 @@ call :Log "当前时间 %date% %time%"
 call :echo "%INFO%日志系统加载完成"
 goto exit
 
+::旧版系统兼容
+:LegacySupport
+set ProgramMode=1
+set Line=----------------------------
+goto exit
 
 :exit
