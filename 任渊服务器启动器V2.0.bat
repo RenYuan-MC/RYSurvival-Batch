@@ -196,9 +196,9 @@ if %LunchMode% == Incomplete call :echo "%INFO%检测到未配置完成,正在准备配置文件
 call :echo "%INFO%检测Java中"
 :: 检测Java列表
 call :JavaCheck
-echo #配置文件,请勿随意删除>progress.properties
-echo #如需重新配置启动器设置清删除本文件>>progress.properties
-echo ConfigSet=true>>progress.properties
+echo #配置文件,请勿随意删除>"%~dp0\client\progress.properties"
+echo #如需重新配置启动器设置清删除本文件>>"%~dp0\client\progress.properties"
+echo ConfigSet=true>>"%~dp0\client\progress.properties"
 cd..
 goto exit
 
@@ -222,7 +222,7 @@ goto exit
 :: 输出彩色字体
 :ColorText
 :: 记录日志
-echo %~2 >>client\log\latest.log
+echo %~2 >>"%~dp0\client\log\latest.log"
 :: 输出彩色字体
 echo off
 <nul set /p ".=%DEL%" > "%~2"
@@ -234,7 +234,7 @@ goto exit
 
 :: 日志记录
 :Log
-echo %LOG%%~1 >>client\log\latest.log
+echo %LOG%%~1 >>"%~dp0\client\log\latest.log"
 goto exit
 
 
@@ -242,7 +242,7 @@ goto exit
 :: 带日志记录的输出
 :Echo
 :: 记录日志
-echo %~1 >>client\log\latest.log
+echo %~1 >>"%~dp0\client\log\latest.log"
 :: 输出
 echo %~1
 goto exit
