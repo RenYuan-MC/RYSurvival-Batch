@@ -30,6 +30,7 @@ for /f "delims=[" %%a in (%~dp0\client\java.path) do (
 )
 
 for /l %%a in (1,1,1) do (ping -n 2 -w 500 0.0.0.1>nul)
+if exist "%~dp0\client\AutoLunch" goto LoopStartServer
 
 :ControlPanel
 title %titl% 控制面板
@@ -38,17 +39,48 @@ set ConfigMode=0
 call :echo "%INFO%%Line%"
 call :echo "%INFO%1：启动服务器"
 call :echo "%INFO%2：Java选择"
+call :echo "%INFO%3：启动服务器(自动重启)"
+call :echo "%INFO%4：设置下次启动跳过控制面板自动重启服务器"
 call :echo "%INFO%%Line%"
 set /p ConfigMode=%INPUT%
 call :Log "用户输入：%ConfigMode%"
 if %ConfigMode% equ 1 call :StartServer
 if %ConfigMode% equ 2 call :JavaControlPanel
+if %ConfigMode% equ 3 goto LoopStartServer
+if %ConfigMode% equ 4 call :ControlPanelBypass
 if %ConfigMode% equ exit goto exit
 for /l %%a in (1,1,1) do (ping -n 2 -w 500 0.0.0.1>nul)
 goto ControlPanel
 
 
+:: 重复启动服务器
+:LoopStartServer
+:: 启动服务器
+call :StartServer
+:: 等待5秒
+for /l %%b in (5,-1,1) do (echo %INFO%服务端将在%%b秒后重启
+ping -n 2 -w 500 0.0.0.1>nul)
+goto LoopStartServer
+
 :: 模块
+goto exit
+
+
+
+:: 跳过控制面板
+:ControlPanelBypass
+echo. >"%~dp0\client\AutoLunch"
+echo ^@echo off >"%~dp0\client\CancelAutoLunch.bat"
+echo cd %%~dp0 >>"%~dp0\client\CancelAutoLunch.bat"
+echo del AutoLunch >>"%~dp0\client\CancelAutoLunch.bat"
+echo echo %INFO%已关闭跳过控制面板自动重启 >>"%~dp0\client\CancelAutoLunch.bat"
+echo ping -n 3 -w 500 0.0.0.1^>nul >>"%~dp0\client\CancelAutoLunch.bat"
+echo del %%0 >>"%~dp0\client\CancelAutoLunch.bat"
+call :echo "%INFO%%Line%"
+call :echo "%INFO%跳过控制面板自动重启已启用"
+call :echo "%INFO%如需关闭,请打开client文件夹下的CancelAutoLunch.bat"
+call :echo "%INFO%%Line%"
+ping -n 3 -w 500 0.0.0.1>nul
 goto exit
 
 
@@ -74,11 +106,11 @@ goto exit
 title %titl% 服务器启动
 call :clsLogo
 call :MemoryCheck
-call :Log "启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%"
+call :echo "%INFO%启动服务端,参数: %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%"
 call :Log "当前时间 %date% %time%"
 %Java% -Xms%MinMem%M -Xmx%UserRam%M -jar %ServerJar%
-if %ERRORLEVEL% neq 0 call :Log "服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time%"
-pause>nul
+if %ERRORLEVEL% neq 0 call :echo "%INFO%服务端异常崩溃,错误码:%ERRORLEVEL%,当前时间 %date% %time%"
+call :echo "%INFO%%Line%"
 goto exit
 
 
@@ -275,7 +307,7 @@ set AutoMemset=true
 set SysMem=768
 set MinMem=128
 set ServerJar=server.jar
-set JavaId=0
+set JavaId=1
 set ServerJarName=%ServerJar:.jar=%
 goto exit
 
